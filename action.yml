@@ -1,3 +1,8 @@
+defaults:
+  run:
+    working-directory: ./desktop
+
+
 name: "Wails Build Action"
 description: "Creates a wails binary"
 branding:
