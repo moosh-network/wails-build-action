@@ -1,3 +1,7 @@
+defaults:
+  run:
+    working-directory: ./desktop
+
 name: CI
 
 on:
