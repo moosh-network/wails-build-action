@@ -240,22 +240,7 @@ runs:
       run: |
         # 1. Setup Variables
         PLATFORM_SUFFIX=$(echo "${{ inputs.build-platform }}" | tr '/' '_')
-        APP_NAME="${{ inputs.build-name }}.app"
-        SOURCE_PATH="build/bin/$APP_NAME"
-        DEST_ZIP="build/bin/${{ inputs.build-name }}_${PLATFORM_SUFFIX}.app.zip"
-
-        # 2. Safety Check: Verify the .app exists where we think it does
-        if [ ! -d "$SOURCE_PATH" ]; then
-          echo "::error::Source .app not found at $SOURCE_PATH"
-          echo "Contents of build/bin:"
-          ls -R build/bin
-          exit 1
-        fi
-
-        # 3. Create Zip
-        echo "Zipping $SOURCE_PATH to $DEST_ZIP"
-        ditto -c -k --keepParent "$SOURCE_PATH" "$DEST_ZIP"
-
+        ditto -c -k --keepParent build/bin/${{ matrix.build.name }}.app build/bin/${{ matrix.build.name }}_${PLATFORM_SUFFIX}.app.zip
     - name: Building Installer (Signed)
       if: runner.os == 'macOS' && inputs.sign != 'false' && inputs.sign-macos-installer-id != '' && startsWith(github.ref, 'refs/tags/')
       shell: bash
