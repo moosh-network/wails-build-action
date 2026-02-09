@@ -238,20 +238,41 @@ runs:
       working-directory: ${{ inputs.app-working-directory }}
       shell: bash
       run: |
-        PLATFORM_SUFFIX=$(echo "${{inputs.build-platform}}" | tr '/' '_')
-        ditto -c -k --keepParent build/bin/${{inputs.build-name}}.app ${{ inputs.app-working-directory }}/build/bin/${{inputs.build-name}}_${PLATFORM_SUFFIX}.app.zip
-    - name: Building Installer
+        # 1. Setup Variables
+        PLATFORM_SUFFIX=$(echo "${{ inputs.build-platform }}" | tr '/' '_')
+        APP_NAME="${{ inputs.build-name }}.app"
+        SOURCE_PATH="build/bin/$APP_NAME"
+        DEST_ZIP="build/bin/${{ inputs.build-name }}_${PLATFORM_SUFFIX}.app.zip"
+
+        # 2. Safety Check: Verify the .app exists where we think it does
+        if [ ! -d "$SOURCE_PATH" ]; then
+          echo "::error::Source .app not found at $SOURCE_PATH"
+          echo "Contents of build/bin:"
+          ls -R build/bin
+          exit 1
+        fi
+
+        # 3. Create Zip
+        echo "Zipping $SOURCE_PATH to $DEST_ZIP"
+        ditto -c -k --keepParent "$SOURCE_PATH" "$DEST_ZIP"
+
+    - name: Building Installer (Signed)
       if: runner.os == 'macOS' && inputs.sign != 'false' && inputs.sign-macos-installer-id != '' && startsWith(github.ref, 'refs/tags/')
       shell: bash
       working-directory: ${{ inputs.app-working-directory }}
       run: |
-        productbuild --sign '${{inputs.sign-macos-installer-id}}' --component ${{ inputs.app-working-directory }}/build/bin/${{inputs.build-name}}.app /Applications ${{ inputs.app-working-directory }}/build/bin/${{inputs.build-name}}.pkg
-    - name: Building Installer
+        # Using relative paths for consistency within the working-directory
+        productbuild --sign '${{ inputs.sign-macos-installer-id }}' \
+                     --component "build/bin/${{ inputs.build-name }}.app" /Applications \
+                     "build/bin/${{ inputs.build-name }}.pkg"
+
+    - name: Building Installer (Unsigned)
       if: runner.os == 'macOS' && inputs.sign-macos-installer-id == '' && startsWith(github.ref, 'refs/tags/')
       shell: bash
       working-directory: ${{ inputs.app-working-directory }}
       run: |
-        productbuild --component ${{ inputs.app-working-directory }}/build/bin/${{inputs.build-name}}.app /Applications ${{ inputs.app-working-directory }}/build/bin/${{inputs.build-name}}.pkg
+        productbuild --component "build/bin/${{ inputs.build-name }}.app" /Applications \
+                     "build/bin/${{ inputs.build-name }}.pkg"
     - name: Notarising Installer and zip
       if: runner.os == 'macOS' && inputs.sign != 'false' && startsWith(github.ref, 'refs/tags/')
       shell: bash
