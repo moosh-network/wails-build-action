@@ -284,10 +284,10 @@ runs:
     - uses: actions/upload-artifact@v4
       if: inputs.package == 'true'
       with:
-        name: Wails Build ${{inputs.build-platform}} ${{inputs.build-name}}
+        name: Wails-Build-${{inputs.build-platform}}-${{inputs.build-name}}
         path: |
-          ${{ inputs.app-working-directory }}/*/bin/
-          ${{ inputs.app-working-directory }}/*\bin\*
+          ${{ matrix.build.platform }}/${{ inputs.app-working-directory }}/build/bin/
+
     - name: Release
       uses: softprops/action-gh-release@v1
       if: inputs.package == 'true' && startsWith(github.ref, 'refs/tags/')
